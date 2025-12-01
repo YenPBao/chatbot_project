@@ -1,0 +1,12 @@
+ {
+  "configurations": [
+    {
+      "name": "Debug Uvicorn (FastAPI)",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "uvicorn",
+      "args": ["main:app", "--reload", "--port", "8000"],
+      "cwd": "${workspaceFolder}/src",
+    }
+  ]
+}

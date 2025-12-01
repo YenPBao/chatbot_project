@@ -1,0 +1,58 @@
+services:
+  redis:
+    image: redis:6.2.6
+    container_name: fastapi-redis
+    command: redis-server --port 6379
+    restart: always
+    ports:
+      - "6379:6379"
+    networks: [taai-network]
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.15.3 # Check lại version
+    container_name: taai-elasticsearch
+    restart: unless-stopped
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - xpack.security.http.ssl.enabled=false
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+    ports:
+      - "9200:9200"
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+    networks: [taai-network]
+
+  backend:
+    build:
+      context: .
+      dockerfile: src/Dockerfile
+    container_name: taai-backend
+    restart: unless-stopped
+    command: ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000"]
+    ports:
+      - "8001:8000"
+    environment:
+      - ENV=local
+      - DB_HOST=host.docker.internal
+      - DB_PORT=3306
+      - DB_NAME=it3180
+      - REDIS_HOST=redis
+      - ELASTIC_URL=http://elasticsearch:9200
+    env_file:
+      - ./src/.env
+    volumes:
+      - venv_data:/src/.venv
+      - ./src:/src
+    depends_on:
+      - redis
+      - elasticsearch
+    networks: [taai-network]
+
+volumes:
+  venv_data:
+  es_data:
+
+networks:
+  taai-network:
+    driver: bridge

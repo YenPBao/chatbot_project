@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <title>JWT Login Demo</title>
+  </head>
+  <body>
+    <h1>Login (Frontend riêng, Backend FastAPI)</h1>
+
+    <form id="login-form">
+      <label>Username:</label>
+      <input id="username" type="text" /><br /><br />
+
+      <label>Password:</label>
+      <input id="password" type="password" /><br /><br />
+
+      <button type="submit">Đăng nhập</button>
+    </form>
+
+    <pre id="result"></pre>
+
+    <script>
+      const form = document.getElementById("login-form");
+      const resultEl = document.getElementById("result");
+
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        const username = document.getElementById("username").value;
+        const password = document.getElementById("password").value;
+
+        const body = new URLSearchParams();
+        body.append("username", username);
+        body.append("password", password);
+
+        const res = await fetch("/api/login", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+          },
+          body: body.toString(),
+        });
+
+        const data = await res.json();
+        resultEl.textContent = JSON.stringify(data, null, 2);
+        if (res.ok && data.access_token) {
+          // store token and redirect to chat page
+          localStorage.setItem('access_token', data.access_token);
+          window.location.href = '/chat';
+        }
+      });
+    </script>
+  </body>
+</html>
