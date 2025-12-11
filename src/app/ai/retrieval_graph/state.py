@@ -6,6 +6,7 @@ from langgraph.graph import add_messages
 from app.ai.shared.state import reduce_docs
 from pydantic import BaseModel
 
+
 class Router(BaseModel):
     logic: str
     type: Literal["more-info", "langchain", "general"]

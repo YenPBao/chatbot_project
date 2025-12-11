@@ -4,6 +4,7 @@ import os
 import sys
 from pathlib import Path
 from langchain_core.runnables import RunnableConfig
+
 ROOT_DIR = Path(__file__).resolve().parents[1]  # D:\chatbot-project\src
 if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
@@ -18,7 +19,9 @@ async def main() -> None:
     config = RunnableConfig(
         configurable={
             "retriever_provider": os.getenv("RETRIEVER_PROVIDER", "elastic-local"),
-            "embedding_model": os.getenv("EMBEDDING_MODEL", "openai/text-embedding-3-small"),
+            "embedding_model": os.getenv(
+                "EMBEDDING_MODEL", "openai/text-embedding-3-small"
+            ),
             "query_model": "google/gemini-2.5-flash",
             "response_model": "google/gemini-2.5-flash",
             "search_kwargs": {"k": 2},

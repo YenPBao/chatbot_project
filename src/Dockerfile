@@ -27,5 +27,3 @@ EXPOSE 8000
 
 # Chạy ứng dụng FastAPI với uvicorn
 CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000"]
-
-

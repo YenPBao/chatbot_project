@@ -4,8 +4,10 @@ from langchain_core.documents import Document
 
 _UUID_NS = uuid.NAMESPACE_URL  # hoặc NAMESPACE_DNS
 
+
 def _generate_uuid(page_content: str) -> str:
     return str(uuid.uuid5(_UUID_NS, page_content))
+
 
 def reduce_docs(
     existing: Optional[list[Document]],
@@ -39,7 +41,9 @@ def reduce_docs(
 
     if isinstance(new, str):
         doc = ensure_doc(new)
-        return existing_list + ([doc] if doc and doc.metadata["uuid"] not in existing_ids else [])
+        return existing_list + (
+            [doc] if doc and doc.metadata["uuid"] not in existing_ids else []
+        )
 
     out = []
     if isinstance(new, list):

@@ -13,7 +13,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.core.db import Base  
+from app.core.db import Base
 from app.model.role import Role
 
 user_roles = Table(
@@ -23,6 +23,7 @@ user_roles = Table(
     Column("role_id", ForeignKey("roles.id", ondelete="CASCADE"), primary_key=True),
 )
 
+
 class User(Base):
     __tablename__ = "users"
     __table_args__ = (
@@ -30,16 +31,24 @@ class User(Base):
         UniqueConstraint("email"),
     )
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True, index=True)
-    username: Mapped[str] = mapped_column(String(50), unique=True, nullable=False, index=True)
-    email: Mapped[str] = mapped_column(String(255), unique=True, nullable=False, index=True)
+    id: Mapped[int] = mapped_column(
+        Integer, primary_key=True, autoincrement=True, index=True
+    )
+    username: Mapped[str] = mapped_column(
+        String(50), unique=True, nullable=False, index=True
+    )
+    email: Mapped[str] = mapped_column(
+        String(255), unique=True, nullable=False, index=True
+    )
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
 
     first_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
-    last_name:  Mapped[str | None] = mapped_column(String(255), nullable=True)
-    is_active:  Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    last_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
 
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, default=datetime.utcnow, nullable=False
+    )
     updated_at: Mapped[datetime] = mapped_column(
         DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
     )
@@ -48,7 +57,7 @@ class User(Base):
         "Role",
         secondary=user_roles,
         back_populates="users",
-        lazy="selectin",   
+        lazy="selectin",
     )
 
     def __repr__(self) -> str:

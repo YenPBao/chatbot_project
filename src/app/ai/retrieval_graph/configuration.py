@@ -1,4 +1,3 @@
-
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -6,7 +5,7 @@ from typing import Annotated
 
 from app.ai.retrieval_graph import prompts
 from app.ai.shared.configuration import BaseConfiguration
-from app.core.config import settings 
+
 
 @dataclass(kw_only=True)
 class AgentConfiguration(BaseConfiguration):

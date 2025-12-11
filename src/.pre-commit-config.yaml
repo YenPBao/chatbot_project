@@ -1,0 +1,28 @@
+repos:
+
+- repo: https://github.com/pre-commit/pre-commit-hooks
+  rev: v4.5.0
+  hooks:
+    - id: trailing-whitespace  # Xóa khoảng trắng thừa
+    - id: end-of-file-fixer    # Đảm bảo có dòng trống cuối file
+    - id: check-yaml           # Kiểm tra lỗi cú pháp YAML
+
+  # 2. Hook tự động định dạng Python (Black)
+- repo: https://github.com/psf/black
+  rev: 24.4.0
+  hooks:
+    - id: black
+      # Tùy chọn: bạn có thể cấu hình Black cụ thể hơn ở đây nếu cần
+
+  # 3. Hook kiểm tra lỗi/style Python (Flake8)
+- repo: https://github.com/PyCQA/flake8
+  rev: 7.1.0 # Luôn kiểm tra rev (revision/version) mới nhất
+  hooks:
+    - id: flake8
+
+# 4. Hook kiểm tra kiểu dữ liệu tĩnh (Mypy)
+- repo: https://github.com/pre-commit/mirrors-mypy
+  rev: v1.8.0 # Luôn kiểm tra phiên bản mới nhất trên GitHub
+  hooks:
+    - id: mypy
+      # args: ['--ignore-missing-imports', '--follow-imports', 'silent']

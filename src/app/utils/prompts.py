@@ -1,4 +1,3 @@
-
 CHAT_SYSTEM_PROMPT = """
 You are an assistant inside an internal application. Your job is to answer user questions accurately and concisely.
 

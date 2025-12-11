@@ -8,14 +8,15 @@ from app.utils.tbconstants import ROLE
 
 oauth2 = OAuth2PasswordBearer(tokenUrl="/api/login")
 
+
 class CurrentUser:
     id: int
     roles: list[str]
     username: str
 
+
 async def get_current_user(
-    token: str = Depends(oauth2),
-    db: AsyncSession = Depends(get_db)
+    token: str = Depends(oauth2), db: AsyncSession = Depends(get_db)
 ) -> CurrentUser:
     try:
         payload = decode_token(token)
@@ -32,7 +33,7 @@ async def get_current_user(
     user = await UserRepository(db).get_by_id(int(user_id))
     if not user or not getattr(user, "is_active", True):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "User not active")
-    
+
     cu = CurrentUser()
     cu.id = int(user_id)
     cu.username = user.username
@@ -47,4 +48,5 @@ def require_roles(allowed: list[str]):
         if not any(r in allowed_set for r in user.roles):
             raise HTTPException(status.HTTP_403_FORBIDDEN, "Forbidden")
         return user
+
     return _dep

@@ -10,7 +10,9 @@ from app.ai.shared import retrieval
 from app.ai.shared.state import reduce_docs
 
 
-async def index_docs(state: IndexState, *, config: Optional[RunnableConfig] = None) -> dict[str, str]:
+async def index_docs(
+    state: IndexState, *, config: Optional[RunnableConfig] = None
+) -> dict[str, list]:
     if not config:
         raise ValueError("Configuration required to run index_docs.")
 
@@ -24,7 +26,7 @@ async def index_docs(state: IndexState, *, config: Optional[RunnableConfig] = No
 
     with retrieval.make_retriever(config) as retriever:
         await retriever.aadd_documents(docs)
-    return {"docs": []}
+    return {"docs": docs}
 
 
 # Define the graph

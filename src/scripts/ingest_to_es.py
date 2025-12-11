@@ -9,8 +9,8 @@ Supports .txt and .md files. If PyPDF2 is installed, will also try to extract te
 Chunks each document into fixed-size windows with overlap and indexes them using the
 `es_rag_service.ESRAGService.index_documents` method which handles embeddings.
 """
+
 import argparse
-import os
 from pathlib import Path
 from typing import List, Dict
 import uuid
@@ -18,12 +18,13 @@ import logging
 
 try:
     from PyPDF2 import PdfReader
+
     _HAS_PDF = True
 except Exception:
     _HAS_PDF = False
 
 from app.services.cache_service import get_es_rag
-from app.config.setting import settings
+from app.core.config import settings
 
 logger = logging.getLogger("ingest_to_es")
 
@@ -104,7 +105,9 @@ async def ingest_folder(source: Path, index: str, chunk_size: int, overlap: int)
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--source", required=False, default="src/resources/documents")
-    parser.add_argument("--index", required=False, default=getattr(settings, "elastic_index", "docs"))
+    parser.add_argument(
+        "--index", required=False, default=getattr(settings, "elastic_index", "docs")
+    )
     parser.add_argument("--chunk-size", type=int, default=1000)
     parser.add_argument("--overlap", type=int, default=200)
     args = parser.parse_args()

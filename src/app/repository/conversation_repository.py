@@ -5,7 +5,6 @@ from datetime import datetime
 
 from sqlalchemy import select, desc, func
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
 from app.model.conversation import Conversation
 from app.model.conversation_message import ConversationMessage
 
@@ -32,7 +31,9 @@ class ConversationRepository:
         await self.db.flush()  # để có conv.id
         return conv
 
-    async def get_conversation_by_id(self, conversation_id: int) -> Optional[Conversation]:
+    async def get_conversation_by_id(
+        self, conversation_id: int
+    ) -> Optional[Conversation]:
         res = await self.db.execute(
             select(Conversation).where(Conversation.id == conversation_id)
         )
@@ -137,11 +138,14 @@ class ConversationRepository:
         offset: int = 0,
         newest_first: bool = False,
     ) -> List[ConversationMessage]:
-        q = (
-            select(ConversationMessage)
-            .where(ConversationMessage.conversation_id == conversation_id)
+        q = select(ConversationMessage).where(
+            ConversationMessage.conversation_id == conversation_id
         )
-        q = q.order_by(desc(ConversationMessage.id) if newest_first else ConversationMessage.id.asc())
+        q = q.order_by(
+            desc(ConversationMessage.id)
+            if newest_first
+            else ConversationMessage.id.asc()
+        )
         q = q.offset(offset).limit(limit)
 
         res = await self.db.execute(q)
@@ -156,7 +160,9 @@ class ConversationRepository:
         return int(res.scalar() or 0)
 
     async def delete_messages(self, conversation_id: int) -> int:
-        msgs = await self.get_messages(conversation_id, limit=10_000, offset=0, newest_first=False)
+        msgs = await self.get_messages(
+            conversation_id, limit=10_000, offset=0, newest_first=False
+        )
         for m in msgs:
             await self.db.delete(m)
         await self.db.flush()

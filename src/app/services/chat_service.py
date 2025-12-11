@@ -1,12 +1,17 @@
-# app/services/chat_service.py
 from __future__ import annotations
 
 import uuid
 import asyncio
-import json
 import os
 from dataclasses import asdict, is_dataclass
-from typing import Any, AsyncGenerator, Optional
+from typing import (
+    Any,
+    AsyncGenerator,
+    Optional,
+    List,
+    Dict,
+    cast,
+)
 
 from langchain_core.runnables import RunnableConfig
 
@@ -86,7 +91,9 @@ class ChatService:
 
         return RunnableConfig(configurable=configurable)
 
-    async def stream_conversation(self, req: Any) -> AsyncGenerator[dict[str, Any] | str, None]:
+    async def stream_conversation(
+        self, req: Any
+    ) -> AsyncGenerator[dict[str, Any] | str, None]:
         conv = await self.conv_svc.get_or_create_conversation(
             req.user_id, req.conversation_id
         )
@@ -110,11 +117,6 @@ class ChatService:
                 lc_messages.append((role, text))
 
         input_msg = req.messages[-1] if req.messages else None
-        user_text = (
-            input_msg.content.parts[0]
-            if input_msg and input_msg.content.parts
-            else ""
-        )
 
         async def _yield_event(obj: Any, event: Optional[str] = None):
             payload: dict[str, Any] = {"data": _dump(obj)}
@@ -182,10 +184,21 @@ class ChatService:
             config = self._make_graph_config(req)
             result = await builder.ainvoke({"messages": lc_messages}, config)
             answer = ""
-            msgs = result.get("messages") or []
+            msgs: List[Any] = []
+            if isinstance(result, dict):
+                msgs = result.get("messages") or []
+            elif hasattr(result, "messages"):
+                msgs = getattr(result, "messages") or []
+            elif hasattr(result, "get"):
+                try:
+                    msgs = result.get("messages") or []
+                except Exception:
+                    msgs = []
+
             if msgs:
-                answer = getattr(msgs[-1], "content", "") or ""
-            answer = str(answer).strip()
+                last = msgs[-1]
+                content = getattr(last, "content", None)
+                answer = str(content or "").strip()
         except Exception as e:
             err_payload = {
                 "type": "message_stream_error",
@@ -269,7 +282,7 @@ class ChatService:
                 yield s
 
         for word in answer.split():
-            patch = [
+            patch: List[Dict[str, str]] = [
                 {
                     "p": "/message/content/parts/0",
                     "o": "append",
@@ -277,7 +290,15 @@ class ChatService:
                 }
             ]
             if _HAS_EVENTS_DTO:
-                ops = [JsonPatchOp(p=o["p"], o=o["o"], v=o["v"]) for o in patch]
+                # ĐÃ SỬA LỖI 2 (Dòng 304): Sử dụng cast để Mypy biết 'o' là Dict[str, str]
+                ops = [
+                    JsonPatchOp(
+                        p=cast(Dict[str, str], o)["p"],
+                        o=cast(Dict[str, str], o)["o"],
+                        v=cast(Dict[str, str], o)["v"],
+                    )
+                    for o in patch
+                ]
                 evt = DeltaPatchEvent(v=ops)
                 async for s in _yield_event(evt, event="delta"):
                     yield s
@@ -287,13 +308,21 @@ class ChatService:
                     yield s
             await asyncio.sleep(0.01)
 
-        final_patch = [
+        final_patch: List[Dict[str, Any]] = [
             {"p": "/message/status", "o": "replace", "v": "finished_successfully"},
             {"p": "/message/end_turn", "o": "replace", "v": True},
             {"p": "/message/metadata", "o": "append", "v": {"is_complete": True}},
         ]
         if _HAS_EVENTS_DTO:
-            ops = [JsonPatchOp(p=o["p"], o=o["o"], v=o["v"]) for o in final_patch]
+            # Áp dụng cast cho final_patch tương tự
+            ops = [
+                JsonPatchOp(
+                    p=cast(Dict[str, Any], o)["p"],
+                    o=cast(Dict[str, Any], o)["o"],
+                    v=cast(Dict[str, Any], o)["v"],
+                )
+                for o in final_patch
+            ]
             evt = DeltaPatchEvent(v=ops)
             async for s in _yield_event(evt, event="delta"):
                 yield s

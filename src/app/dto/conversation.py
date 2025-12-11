@@ -1,7 +1,8 @@
 from datetime import datetime
-from typing import List, Literal, Optional
+from typing import List, Optional
 from pydantic import BaseModel
-from app.dto.message import MessageRead, MessageContent, MessageBase
+from app.dto.message import MessageRead, MessageBase
+
 
 # POST /backend-api/f/conversation
 class GenerateMessageRequest(BaseModel):
@@ -10,9 +11,11 @@ class GenerateMessageRequest(BaseModel):
     messages: List[MessageBase]
     metadata: dict | None = None
 
+
 class GenerateMessageSimpleResponse(BaseModel):
     conversation_id: str
     message: MessageRead
+
 
 # List conversations
 class ConversationListItem(BaseModel):
@@ -21,11 +24,13 @@ class ConversationListItem(BaseModel):
     last_message: str | None = None
     updated_at: datetime
 
+
 class ConversationListResponse(BaseModel):
     items: List[ConversationListItem]
     limit: int
     offset: int
     total: int
+
 
 # 1.3 Detail
 class ConversationDetailResponse(BaseModel):

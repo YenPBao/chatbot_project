@@ -1,9 +1,3 @@
-"""Manage the configuration of various retrievers.
-
-This module provides functionality to create and manage retrievers for different
-vector store backends, specifically Elasticsearch, Pinecone, and MongoDB.
-"""
-
 import os
 from contextlib import contextmanager
 from typing import Generator
@@ -11,11 +5,16 @@ from typing import Generator
 from langchain_core.embeddings import Embeddings
 from langchain_core.runnables import RunnableConfig
 from langchain_core.vectorstores import VectorStoreRetriever
-
 from langchain_chroma import Chroma
-from app.ai.shared.configuration import BaseConfiguration
 
-## Encoder constructors
+try:
+    # These optional providers may not be installed in the analysis environment.
+    from langchain_cohere import CohereEmbeddings  # type: ignore[import]
+except Exception:  # pragma: no cover
+    CohereEmbeddings = None  # type: ignore
+
+
+from app.ai.shared.configuration import BaseConfiguration
 
 
 def make_text_encoder(model: str) -> Embeddings:
@@ -26,16 +25,17 @@ def make_text_encoder(model: str) -> Embeddings:
 
             return OpenAIEmbeddings(model=model)
         case "cohere":
-            from langchain_cohere import CohereEmbeddings
-
+            if CohereEmbeddings is None:
+                raise RuntimeError("Cohere embeddings provider not installed")
             return CohereEmbeddings(model=model)  # type: ignore
         case _:
             raise ValueError(f"Unsupported embedding provider: {provider}")
 
 
-## Retriever constructors
 @contextmanager
-def make_chroma_retriever(configuration, embedding_model) -> Generator[VectorStoreRetriever, None, None]:
+def make_chroma_retriever(
+    configuration, embedding_model
+) -> Generator[VectorStoreRetriever, None, None]:
     persist_dir = os.environ.get("CHROMA_PERSIST_DIR", "./chroma_db")
     collection = os.environ.get("CHROMA_COLLECTION", "langchain_index")
 
@@ -48,8 +48,9 @@ def make_chroma_retriever(configuration, embedding_model) -> Generator[VectorSto
 
 
 @contextmanager
-def make_elastic_retriever(configuration: BaseConfiguration, embedding_model: Embeddings):
-    from langchain_elasticsearch import ElasticsearchStore
+def make_elastic_retriever(
+    configuration: BaseConfiguration, embedding_model: Embeddings
+):
 
     connection_options = {}
     provider = configuration.retriever_provider
@@ -61,10 +62,14 @@ def make_elastic_retriever(configuration: BaseConfiguration, embedding_model: Em
                 "es_password": os.environ["ELASTICSEARCH_PASSWORD"],
             }
         else:
-            connection_options = {}  # no auth
+            connection_options = {}
     else:
-        # cloud/serverless
         connection_options = {"es_api_key": os.environ["ELASTICSEARCH_API_KEY"]}
+
+    try:
+        from langchain_elasticsearch import ElasticsearchStore  # type: ignore[import]
+    except Exception:
+        raise RuntimeError("Elasticsearch store provider not installed")
 
     vstore = ElasticsearchStore(
         es_url=os.environ["ELASTICSEARCH_URL"],
@@ -74,12 +79,13 @@ def make_elastic_retriever(configuration: BaseConfiguration, embedding_model: Em
     )
     yield vstore.as_retriever(search_kwargs=configuration.search_kwargs)
 
+
 @contextmanager
 def make_pinecone_retriever(
     configuration: BaseConfiguration, embedding_model: Embeddings
 ) -> Generator[VectorStoreRetriever, None, None]:
     """Configure this agent to connect to a specific pinecone index."""
-    from langchain_pinecone import PineconeVectorStore
+    from langchain_pinecone import PineconeVectorStore  # type: ignore[import]
 
     vstore = PineconeVectorStore.from_existing_index(
         os.environ["PINECONE_INDEX_NAME"], embedding=embedding_model
@@ -92,7 +98,7 @@ def make_mongodb_retriever(
     configuration: BaseConfiguration, embedding_model: Embeddings
 ) -> Generator[VectorStoreRetriever, None, None]:
     """Configure this agent to connect to a specific MongoDB Atlas index & namespaces."""
-    from langchain_mongodb.vectorstores import MongoDBAtlasVectorSearch
+    from langchain_mongodb.vectorstores import MongoDBAtlasVectorSearch  # type: ignore[import]
 
     vstore = MongoDBAtlasVectorSearch.from_connection_string(
         os.environ["MONGODB_URI"],
